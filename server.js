@@ -188,8 +188,8 @@ const server = http.createServer((req, res) => {
     
     let filePath = path.join(DIST_DIR, relativePath);
     
-    // Fallback to index.html for Single Page App routing
-    if (!path.extname(relativePath) || !fs.existsSync(filePath)) {
+    // Fallback to index.html for Single Page App routing (extension-less routes only)
+    if (!path.extname(relativePath)) {
         filePath = path.join(DIST_DIR, 'index.html');
     }
 

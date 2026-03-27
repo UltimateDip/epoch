@@ -54,19 +54,24 @@ export function useSchedule() {
         };
     }, [fetchSchedule]);
 
-    const saveToServer = async (newSchedule) => {
+    const saveToServer = async (newSchedule, previousSchedule) => {
         try {
-            await fetch('/data', {
+            const res = await fetch('/data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newSchedule)
             });
+            if (!res.ok) throw new Error('Server rejected save');
         } catch (e) {
-            console.error("Failed to save schedule", e);
+            console.error("Failed to save schedule. Rolling back...", e);
+            if (previousSchedule) {
+                setSchedule(previousSchedule);
+            }
         }
     };
 
     const updateBlock = (updatedBlock) => {
+        const previousSchedule = [...schedule];
         const newSchedule = schedule.map(block => 
             block.id === updatedBlock.id ? updatedBlock : block
         );
@@ -76,23 +81,26 @@ export function useSchedule() {
             newSchedule.sort((a, b) => a.start.localeCompare(b.start));
         }
         setSchedule(newSchedule);
-        saveToServer(newSchedule);
+        saveToServer(newSchedule, previousSchedule);
     };
 
     const deleteBlock = (id) => {
+        const previousSchedule = [...schedule];
         const newSchedule = schedule.filter(block => block.id !== id);
         setSchedule(newSchedule);
-        saveToServer(newSchedule);
+        saveToServer(newSchedule, previousSchedule);
     };
 
     const resetToDefault = () => {
+        const previousSchedule = [...schedule];
         setSchedule(defaultBlocks);
-        saveToServer(defaultBlocks);
+        saveToServer(defaultBlocks, previousSchedule);
     };
 
     const reorderBlocks = (newSchedule) => {
+        const previousSchedule = [...schedule];
         setSchedule(newSchedule);
-        saveToServer(newSchedule);
+        saveToServer(newSchedule, previousSchedule);
     };
 
     return {

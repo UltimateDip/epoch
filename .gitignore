@@ -1,28 +1,5 @@
-# Dependencies
-node_modules/
-timetable-ui/node_modules/
-
-# Build outputs
-dist/
-timetable-ui/dist/
-
-# Local data (Database)
 timetable.json
-*.tmp.json
-
-# Logs
-*.log
-/tmp/
-
-# OS files
+timetable.tmp.json
+backup_*.json
+node_modules/
 .DS_Store
-Thumbs.db
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Project specific
-.gemini/
