@@ -1,11 +1,53 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
+const crypto = require('crypto');
 
 const PROJECT_DIR = __dirname;
 const DIST_DIR = path.join(PROJECT_DIR, 'timetable-ui', 'dist');
 const DATA_FILE = path.join(PROJECT_DIR, 'timetable.json');
 const TMP_FILE = path.join(PROJECT_DIR, 'timetable.tmp.json');
+
+// Generate local in-memory secret for this session
+const SESSION_SECRET = crypto.randomBytes(16).toString('hex');
+
+// --- Notification Logic ---
+let lastNotifiedId = null;
+
+function triggerNotification(phase, tasks) {
+    const subtitle = Array.isArray(tasks) ? tasks[0] : (tasks || "");
+    const script = `display notification "${phase}" with title "Epoch" subtitle "${subtitle}"`;
+    spawn('osascript', ['-e', script]);
+}
+
+function checkSchedule() {
+    if (!fs.existsSync(DATA_FILE)) return;
+    
+    try {
+        const schedule = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        const currentBlock = schedule.find(block => {
+            return currentTime >= block.start && currentTime < block.end;
+        });
+
+        if (currentBlock && currentBlock.id !== lastNotifiedId) {
+            triggerNotification(currentBlock.phase, currentBlock.tasks);
+            lastNotifiedId = currentBlock.id;
+        } else if (!currentBlock) {
+            lastNotifiedId = null;
+        }
+    } catch (e) {
+        console.error("Error in checkSchedule loop:", e);
+    }
+}
+
+// Run check every 60 seconds
+setInterval(checkSchedule, 60000);
+// Initial check on start
+checkSchedule();
 
 // --- Input Sanitization Utilities ---
 function sanitizeString(str) {
@@ -39,7 +81,8 @@ function sanitizeObject(obj) {
 
 // --- Backup Utilities ---
 function handleBackup(currentDataStr) {
-    const backups = fs.readdirSync(PROJECT_DIR)
+    const fsItems = fs.readdirSync(PROJECT_DIR);
+    const backups = fsItems
         .filter(f => f.startsWith('backup_') && f.endsWith('.json'))
         .map(f => {
             const stat = fs.statSync(path.join(PROJECT_DIR, f));
@@ -76,23 +119,6 @@ function handleBackup(currentDataStr) {
     }
 }
 
-// --- Heartbeat state ---
-let activeConnections = 0;
-let shutdownTimer = null;
-
-function resetShutdownTimer() {
-    if (shutdownTimer) clearTimeout(shutdownTimer);
-    shutdownTimer = setTimeout(() => {
-        if (activeConnections === 0) {
-            console.log("No active SSE connections for 30s. Triggering auto-shutdown.");
-            process.exit(0);
-        }
-    }, 30000);
-}
-
-// Ensure the server auto-shuts down if the browser never opens
-resetShutdownTimer();
-
 const mimeTypes = {
     '.html': 'text/html',
     '.js': 'text/javascript',
@@ -110,35 +136,6 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // --- SSE Heartbeat Endpoint ---
-    if (req.url === '/events') {
-        res.writeHead(200, {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-        });
-        
-        activeConnections++;
-        if (shutdownTimer) clearTimeout(shutdownTimer);
-
-        res.write('data: connected\n\n');
-
-        // Send a ping every 10 seconds to keep connection alive
-        const pingInterval = setInterval(() => {
-            res.write('data: ping\n\n');
-        }, 10000);
-
-        req.on('close', () => {
-            clearInterval(pingInterval);
-            activeConnections--;
-            if (activeConnections <= 0) {
-                activeConnections = 0;
-                resetShutdownTimer();
-            }
-        });
-        return;
-    }
-
     // --- Data Endpoints ---
     if (req.url === '/data' && req.method === 'GET') {
         if (fs.existsSync(DATA_FILE)) {
@@ -152,6 +149,13 @@ const server = http.createServer((req, res) => {
     }
 
     if (req.url === '/data' && req.method === 'POST') {
+        // Auth Check
+        if (req.headers['x-epoch-auth'] !== SESSION_SECRET) {
+            res.writeHead(401);
+            res.end('Unauthorized');
+            return;
+        }
+
         let body = '';
         req.on('data', chunk => body += chunk.toString());
         req.on('end', () => {
@@ -168,6 +172,9 @@ const server = http.createServer((req, res) => {
                 
                 res.writeHead(200);
                 res.end('Saved');
+                
+                // Refresh local loop after save
+                checkSchedule();
             } catch (e) {
                 console.error(e);
                 res.writeHead(400);
@@ -202,6 +209,15 @@ const server = http.createServer((req, res) => {
             headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
             headers['Pragma'] = 'no-cache';
             headers['Expires'] = '0';
+            
+            // Bootstrap Injection for index.html
+            if (filePath.endsWith('index.html')) {
+                let html = fs.readFileSync(filePath, 'utf8');
+                html = html.replace('<head>', `<head><script>window.EPOCH_TOKEN = "${SESSION_SECRET}";</script>`);
+                res.writeHead(200, headers);
+                res.end(html);
+                return;
+            }
         }
         
         res.writeHead(200, headers);
@@ -212,8 +228,8 @@ const server = http.createServer((req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 0;
+const PORT = process.env.PORT || 53922; // Use a unique port to avoid conflicts
 server.listen(PORT, '127.0.0.1', () => {
-    const port = server.address().port;
-    console.log(`Server dynamically launched at http://127.0.0.1:${port}`);
+    console.log(`Epoch persistent service running at http://127.0.0.1:${PORT}`);
 });
+
