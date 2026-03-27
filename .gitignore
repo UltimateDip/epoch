@@ -1,5 +1,29 @@
+# Dependencies
+node_modules/
+timetable-ui/node_modules/
+
+# Build outputs
+dist/
+timetable-ui/dist/
+
+# Local data (Database & Backups) - CRITICAL: DO NOT REMOVE
 timetable.json
 timetable.tmp.json
 backup_*.json
-node_modules/
+
+# Logs & Temp
+*.log
+/tmp/
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# IDEs & System
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+.gemini/
