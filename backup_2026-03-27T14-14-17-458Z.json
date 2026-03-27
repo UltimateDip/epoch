@@ -1,0 +1,141 @@
+[
+  {
+    "id": 1,
+    "start": "07:30",
+    "end": "08:00",
+    "phase": "🚀 Ignition",
+    "theme": "row-ignition",
+    "tasks": [
+      "Wake up and hydration (500ml water)",
+      "Light movement or breathing exercises",
+      "Identification of **Top 3** daily work goals"
+    ]
+  },
+  {
+    "id": 2,
+    "start": "08:00",
+    "end": "10:00",
+    "phase": "🧠 Upskilling",
+    "theme": "row-upskill",
+    "tasks": [
+      "**Architecture:** System design, Scalability, Microservices",
+      "**Hands-on:** Prototyping in Go/Rust or newer industry stacks",
+      "Reading engineering blogs (Netflix, Uber, Meta, etc.)",
+      "Deep dive into whitepapers or architectural diagrams"
+    ]
+  },
+  {
+    "id": 3,
+    "start": "10:00",
+    "end": "10:20",
+    "phase": "🚿 The Anchor",
+    "theme": "row-anchor",
+    "tasks": [
+      "Consistent Shower and grooming",
+      "Mental transition from **Study Mode** to **Work Mode**"
+    ]
+  },
+  {
+    "id": 4,
+    "start": "10:20",
+    "end": "11:00",
+    "phase": "🎧 Transition",
+    "theme": "row-anchor",
+    "tasks": [
+      "15–20m Commute (Tech podcasts/audiobooks)",
+      "Triage urgent Slack/Email messages",
+      "Stand-up Sync preparation and task alignment"
+    ]
+  },
+  {
+    "id": 5,
+    "start": "11:00",
+    "end": "17:00",
+    "phase": "💻 Office Core",
+    "theme": "row-office",
+    "tasks": [
+      "Deep work coding sessions and PR reviews",
+      "Collaboration meetings and team syncs",
+      "**WFH Flow:** Stock alerts check, investment maintenance",
+      "Quick 5-min household resets (dishwashers, robot vacuum)",
+      "Strategic parallel tasks that require zero cognitive load"
+    ]
+  },
+  {
+    "id": 6,
+    "start": "17:00",
+    "end": "17:30",
+    "phase": "🚪 Extraction",
+    "theme": "row-office",
+    "tasks": [
+      "Post-office commute decompression",
+      "Clear cache: Jot down unfinished tasks for tomorrow",
+      "Update status on tickets/documentation"
+    ]
+  },
+  {
+    "id": 7,
+    "start": "17:30",
+    "end": "18:30",
+    "phase": "🧘‍♂️ Rest Gap",
+    "theme": "row-rest",
+    "tasks": [
+      "**Total Offline Time:** No screens allowed",
+      "Afternoon tea, short power nap, or stretching",
+      "Mental reset to prepare for the **Second Wind**"
+    ]
+  },
+  {
+    "id": 8,
+    "start": "18:30",
+    "end": "20:30",
+    "phase": "⚡ Second Wind",
+    "theme": "row-rest",
+    "tasks": [
+      "Side projects development or open-source contributions",
+      "Deep dive into office tools (Observability, CI/CD, K8s)",
+      "Refinement of local development environment/tooling",
+      "Exploration of technologies not currently used in the office"
+    ]
+  },
+  {
+    "id": 9,
+    "start": "20:30",
+    "end": "23:15",
+    "phase": "🍽️ Evening Flex",
+    "theme": "row-flex",
+    "tasks": [
+      "Portfolio review and financial/investment tracking",
+      "Essential household chores (Cleaning, Meal prep)",
+      "Non-technical reading or news catch-up",
+      "Review of any personal admin or logistics",
+      "Mindful dinner (Social/Family focus)",
+      "Final light check of the next day&amp;amp;#39;s schedule",
+      "Reviewing the **Top 3** for tomorrow"
+    ]
+  },
+  {
+    "id": 10,
+    "start": "23:15",
+    "end": "00:00",
+    "phase": "🌙 Shutdown",
+    "theme": "row-sleep",
+    "tasks": [
+      "**GO TO SLEEP**",
+      "Low-light environment (No blue light)",
+      "Recording **Night Burst** bug fixes for the 08:00 AM window",
+      "Preparing sleep environment for maximum rest"
+    ]
+  },
+  {
+    "id": 11,
+    "start": "00:00",
+    "end": "07:30",
+    "phase": "💤 Recovery",
+    "theme": "row-sleep",
+    "tasks": [
+      "Uninterrupted 7.5–8 hour sleep session",
+      "Maximum cognitive reset for the next morning"
+    ]
+  }
+]

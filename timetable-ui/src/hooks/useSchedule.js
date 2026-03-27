@@ -1,0 +1,106 @@
+import { useState, useEffect, useCallback } from 'react';
+
+const defaultBlocks = [
+    {
+        id: 1,
+        start: "07:30",
+        end: "08:00",
+        phase: "🚀 Ignition",
+        theme: "row-ignition",
+        tasks: [
+            "Wake up and hydration",
+            "Identification of **Top 3** daily goals"
+        ]
+    }
+];
+
+export function useSchedule() {
+    const [schedule, setSchedule] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchSchedule = useCallback(async () => {
+        try {
+            const res = await fetch('/data');
+            if (res.ok) {
+                const data = await res.json();
+                setSchedule(data);
+            } else {
+                setSchedule(defaultBlocks);
+                saveToServer(defaultBlocks);
+            }
+        } catch (e) {
+            setSchedule(defaultBlocks);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchSchedule();
+
+        // Establish Server-Sent Events (SSE) connection for the heartbeat
+        const eventSource = new EventSource('/events');
+        
+        eventSource.onopen = () => {
+            console.log('SSE connected for heartbeat.');
+        };
+
+        eventSource.onerror = (e) => {
+            console.error('SSE connection lost.', e);
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    }, [fetchSchedule]);
+
+    const saveToServer = async (newSchedule) => {
+        try {
+            await fetch('/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newSchedule)
+            });
+        } catch (e) {
+            console.error("Failed to save schedule", e);
+        }
+    };
+
+    const updateBlock = (updatedBlock) => {
+        const newSchedule = schedule.map(block => 
+            block.id === updatedBlock.id ? updatedBlock : block
+        );
+        // If it's a new block not found
+        if (!schedule.find(b => b.id === updatedBlock.id)) {
+            newSchedule.push(updatedBlock);
+            newSchedule.sort((a, b) => a.start.localeCompare(b.start));
+        }
+        setSchedule(newSchedule);
+        saveToServer(newSchedule);
+    };
+
+    const deleteBlock = (id) => {
+        const newSchedule = schedule.filter(block => block.id !== id);
+        setSchedule(newSchedule);
+        saveToServer(newSchedule);
+    };
+
+    const resetToDefault = () => {
+        setSchedule(defaultBlocks);
+        saveToServer(defaultBlocks);
+    };
+
+    const reorderBlocks = (newSchedule) => {
+        setSchedule(newSchedule);
+        saveToServer(newSchedule);
+    };
+
+    return {
+        schedule,
+        loading,
+        updateBlock,
+        deleteBlock,
+        resetToDefault,
+        reorderBlocks
+    };
+}
