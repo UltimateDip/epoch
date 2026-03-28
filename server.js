@@ -235,9 +235,16 @@ const server = http.createServer((req, res) => {
                 }
 
                 const remainingMinutes = Math.round(endMins - checkMins);
+                let timeStr = `${remainingMinutes}m`;
+                if (remainingMinutes >= 60) {
+                    const hours = Math.floor(remainingMinutes / 60);
+                    const mins = remainingMinutes % 60;
+                    timeStr = mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+                }
+
                 res.writeHead(200, { 'Content-Type': 'text/plain' });
                 // We assume currentBlock.phase already includes the emoji like "🚀 Ignition"
-                res.end(`${currentBlock.phase} (${remainingMinutes}m)`);
+                res.end(`${currentBlock.phase} (${timeStr})`);
             } else {
                 res.writeHead(200, { 'Content-Type': 'text/plain' });
                 res.end('⌛ No Active Block');
