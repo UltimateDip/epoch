@@ -37,28 +37,17 @@ export function useSchedule() {
 
     useEffect(() => {
         fetchSchedule();
-
-        // Establish Server-Sent Events (SSE) connection for the heartbeat
-        const eventSource = new EventSource('/events');
-        
-        eventSource.onopen = () => {
-            console.log('SSE connected for heartbeat.');
-        };
-
-        eventSource.onerror = (e) => {
-            console.error('SSE connection lost.', e);
-        };
-
-        return () => {
-            eventSource.close();
-        };
     }, [fetchSchedule]);
 
     const saveToServer = async (newSchedule, previousSchedule) => {
         try {
+            const token = window.EPOCH_TOKEN;
             const res = await fetch('/data', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Epoch-Auth': token
+                },
                 body: JSON.stringify(newSchedule)
             });
             if (!res.ok) throw new Error('Server rejected save');
