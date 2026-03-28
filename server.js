@@ -184,6 +184,72 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    if (req.url === '/status' && req.method === 'GET') {
+        if (!fs.existsSync(DATA_FILE)) {
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('⌛ No Active Block');
+            return;
+        }
+
+        try {
+            const schedule = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            const timeToMinutes = (timeStr) => {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            };
+
+            const currentBlock = schedule.find(block => {
+                const startMins = timeToMinutes(block.start);
+                let endMins = timeToMinutes(block.end);
+                
+                // Handle midnight crossover for the active block detection
+                if (endMins <= startMins) {
+                    endMins += 1440;
+                }
+                
+                // Current time could be before midnight or after midnight (in the crossover period)
+                // If it's after midnight (e.g. 00:30) and the block is 23:00-01:00, 
+                // currentMinutes is 30, but relative to this block it should be treated as 30 + 1440 = 1470
+                let checkMins = currentMinutes;
+                if (endMins > 1440 && currentMinutes < startMins) {
+                    checkMins += 1440;
+                }
+
+                return checkMins >= startMins && checkMins < endMins;
+            });
+
+            if (currentBlock) {
+                const startMins = timeToMinutes(currentBlock.start);
+                let endMins = timeToMinutes(currentBlock.end);
+                
+                if (endMins <= startMins) {
+                    endMins += 1440;
+                }
+                
+                let checkMins = currentMinutes;
+                if (endMins > 1440 && currentMinutes < startMins) {
+                    checkMins += 1440;
+                }
+
+                const remainingMinutes = Math.round(endMins - checkMins);
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                // We assume currentBlock.phase already includes the emoji like "🚀 Ignition"
+                res.end(`${currentBlock.phase} (${remainingMinutes}m)`);
+            } else {
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end('⌛ No Active Block');
+            }
+        } catch (e) {
+            console.error(e);
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('Error parsing schedule');
+        }
+        return;
+    }
+
     // --- Static File Serving ---
     let reqUrl = req.url === '/' ? '/index.html' : req.url;
     
