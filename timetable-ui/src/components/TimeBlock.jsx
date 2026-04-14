@@ -1,13 +1,25 @@
 import React from 'react';
 import TaskList from './TaskList';
 
-function TimeBlock({ block, isAdmin, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast }) {
+function TimeBlock({ block, isAdmin, isActive, progress, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast }) {
     
     return (
-        <tr className={`fade-in ${block.theme}`} id={`block-${block.id}`}>
+        <tr 
+            className={`fade-in ${block.theme} ${isActive ? 'active-block-highlight' : ''}`} 
+            id={`block-${block.id}`}
+            style={{ '--progress': progress }}
+        >            
             <td className="time-col">
+                {isActive && (
+                    <div className="water-container">
+                        <div className="water-layer water-layer-1" />
+                        <div className="water-layer water-layer-2" />
+                    </div>
+                )}
                 {block.start} - {block.end}
             </td>
+
+
             
             <td className="phase-col">
                 {block.phase}
@@ -17,7 +29,7 @@ function TimeBlock({ block, isAdmin, onEdit, onDelete, onMoveUp, onMoveDown, isF
                 <TaskList tasks={block.tasks} />
                 
                 {isAdmin && (
-                    <div className="actions-col" style={{marginTop: '15px', display: 'flex', gap: '10px'}}>
+                    <div className="actions-col" style={{marginTop: '15px', display: 'flex', gap: '10px', position: 'relative', zIndex: 10}}>
                         <button className="icon-btn" onClick={onMoveUp} disabled={isFirst} title="Move Up">
                             <i className="fas fa-arrow-up"></i>
                         </button>

@@ -1,7 +1,7 @@
 import React from 'react';
 import TimeBlock from './TimeBlock';
 
-function Dashboard({ schedule, isAdmin, onEdit, onDelete, onReset, onReorder, onAddNew }) {
+function Dashboard({ schedule, isAdmin, activeState, onEdit, onDelete, onReset, onReorder, onAddNew }) {
 
     const moveBlock = (index, direction) => {
         const newSchedule = [...schedule];
@@ -27,11 +27,13 @@ function Dashboard({ schedule, isAdmin, onEdit, onDelete, onReset, onReorder, on
                             </tr>
                         </thead>
                         <tbody id="timetable-body">
-                            {schedule.map((block, index) => (
+                             {schedule.map((block, index) => (
                                 <TimeBlock 
                                     key={block.id} 
                                     block={block} 
                                     isAdmin={false}
+                                    isActive={activeState.id === block.id}
+                                    progress={activeState.id === block.id ? activeState.progress : 0}
                                 />
                             ))}
                         </tbody>

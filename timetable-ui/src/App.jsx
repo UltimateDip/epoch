@@ -8,40 +8,57 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
 
-  // Auto-scroll logic port from vanilla
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update current time every minute
   useEffect(() => {
-    if (!loading && schedule.length > 0) {
-      const now = new Date();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
-      for (let i = 0; i < schedule.length; i++) {
-        const block = schedule[i];
-        const [startH, startM] = block.start.split(':').map(Number);
-        const [endH, endM] = block.end.split(':').map(Number);
-        
-        let blockStartMins = startH * 60 + startM;
-        let blockEndMins = endH * 60 + endM;
-        
-        if (blockEndMins < blockStartMins) {
-            blockEndMins += 24 * 60; // Handle midnight crossing
-        }
-        
-        let adjustedCurrentMins = currentMinutes;
-        if (currentMinutes < blockStartMins && blockEndMins > 24 * 60 && startH >= 12) {
-            adjustedCurrentMins += 24 * 60;
-        }
+  // Compute active block and progress (L-to-R flow)
+  const activeState = React.useMemo(() => {
+    if (loading || !schedule.length) return { id: null, progress: 0 };
 
-        if (adjustedCurrentMins >= blockStartMins && adjustedCurrentMins < blockEndMins) {
-            const el = document.getElementById(`block-${block.id}`);
-            if (el) {
-                el.classList.add('active-block-highlight');
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            break;
-        }
+    const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+
+    for (let i = 0; i < schedule.length; i++) {
+      const block = schedule[i];
+      const [startH, startM] = block.start.split(':').map(Number);
+      const [endH, endM] = block.end.split(':').map(Number);
+      
+      let blockStartMins = startH * 60 + startM;
+      let blockEndMins = endH * 60 + endM;
+      
+      if (blockEndMins <= blockStartMins) {
+          blockEndMins += 24 * 60; // Handle midnight crossing
+      }
+      
+      let adjustedCurrentMins = currentMinutes;
+      if (currentMinutes < blockStartMins && blockEndMins > 1440) {
+          adjustedCurrentMins += 24 * 60;
+      }
+
+      if (adjustedCurrentMins >= blockStartMins && adjustedCurrentMins < blockEndMins) {
+          const totalDuration = blockEndMins - blockStartMins;
+          const elapsed = adjustedCurrentMins - blockStartMins;
+          const progress = Math.min(Math.max(elapsed / totalDuration, 0), 1);
+          
+          return { id: block.id, progress };
       }
     }
-  }, [loading, schedule]);
+    return { id: null, progress: 0 };
+  }, [loading, schedule, currentTime]);
+
+  // Auto-scroll logic 
+  useEffect(() => {
+    if (activeState.id) {
+      const el = document.getElementById(`block-${activeState.id}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [activeState.id]);
 
   if (loading) return <div className="app-container" style={{color: 'white', textAlign: 'center', marginTop: '50px'}}>Loading...</div>;
 
@@ -64,6 +81,7 @@ function App() {
       <Dashboard 
         schedule={schedule} 
         isAdmin={isAdmin} 
+        activeState={activeState}
         onEdit={(block) => setEditingBlock(block)}
         onDelete={deleteBlock}
         onReset={resetToDefault}

@@ -14,6 +14,16 @@
     --accent-rest: #8B5CF6;     /* Violet */
     --accent-flex: #EC4899;     /* Pink */
     --accent-sleep: #64748B;    /* Slate */
+
+    /* RGB variants for transparent overlays */
+    --rgb-ignition: 245, 158, 11;
+    --rgb-upskill: 16, 185, 129;
+    --rgb-anchor: 6, 182, 212;
+    --rgb-office: 59, 130, 246;
+    --rgb-rest: 139, 92, 246;
+    --rgb-flex: 236, 72, 153;
+    --rgb-sleep: 100, 116, 139;
+    --rgb-accent: var(--rgb-office); /* Default */
 }
 
 * {
@@ -187,9 +197,85 @@ tbody tr:hover {
     position: relative;
 }
 
+/* Water Progress Bar (Dual Layer Flowing Effect) */
+.active-block-highlight {
+    background-color: rgba(15, 23, 42, 0.9) !important;
+    border: 1px solid rgba(var(--rgb-accent), 0.5) !important;
+    box-shadow: 0 0 25px rgba(var(--rgb-accent), 0.2) !important;
+    transform: translateZ(0) !important; /* Establishes absolute positioning containing block without breaking table grid */
+    z-index: 5;
+}
+
+.water-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 0; /* Keeps it strictly behind table text but above row bg */
+    border-radius: 12px; /* Smooth corners for the row highlight */
+    overflow: hidden;
+    /* Overall transparency so background/text shows through safely */
+    opacity: 0.35;
+    /* Global fade from left to right along the body of the water */
+    -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,1) 80%);
+    mask-image: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,1) 80%);
+}
+
+.water-layer {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: calc(var(--progress, 0) * 100%);
+    transition: width 1s linear;
+    /* Completely solid color (NO alpha) to ensure strict front-to-back occlusion */
+    background: rgb(var(--rgb-accent));
+}
+
+/* Layer 1 - Back wave (Darker to give depth) */
+.water-layer-1 {
+    filter: brightness(0.6); /* Slightly darker shade */
+    -webkit-mask-image: 
+        linear-gradient(to right, black calc(100% - 40px), transparent calc(100% - 40px)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L20 0 C40 16.6 40 33.3 20 50 C0 66.6 0 83.3 20 100 L0 100 Z' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-position: left top, right 0;
+    -webkit-mask-size: 100% 100%, 40px 100px;
+    -webkit-mask-repeat: no-repeat, repeat-y;
+    animation: wave1 1.5s linear infinite;
+}
+
+/* Layer 2 - Front wave (Brighter, perfectly overpaints layer 1) */
+.water-layer-2 {
+    filter: brightness(1.1); /* Brighter surface color */
+    -webkit-mask-image: 
+        linear-gradient(to right, black calc(100% - 50px), transparent calc(100% - 50px)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 150' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L25 0 C50 25 50 50 25 75 C0 100 0 125 25 150 L0 150 Z' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-position: left top, right 0;
+    -webkit-mask-size: 100% 100%, 50px 150px;
+    -webkit-mask-repeat: no-repeat, repeat-y;
+    animation: wave2 3.5s linear infinite;
+}
+
+@keyframes wave1 {
+    0% { -webkit-mask-position: left top, right 0; }
+    100% { -webkit-mask-position: left top, right 200px; }
+}
+
+@keyframes wave2 {
+    0% { -webkit-mask-position: left top, right 0; }
+    100% { -webkit-mask-position: left top, right 300px; }
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 15px rgba(var(--rgb-accent), 0.2); }
+    50% { box-shadow: 0 0 30px rgba(var(--rgb-accent), 0.4); }
+    100% { box-shadow: 0 0 15px rgba(var(--rgb-accent), 0.2); }
+}
+
 td {
     padding: 24px;
     vertical-align: top;
+    position: static; /* Vital: ensure TD doesn't clip water-container to a single cell */
 }
 
 td.time-col {
@@ -276,6 +362,15 @@ td.tasks-col {
 .row-sleep td.time-col { border-left-color: var(--accent-sleep); color: var(--accent-sleep); }
 .row-sleep td.phase-col { color: var(--accent-sleep); }
 .row-sleep .task-list li::before { color: var(--accent-sleep); }
+
+/* Theme-specific water colors */
+.row-ignition { --rgb-accent: var(--rgb-ignition); }
+.row-upskill { --rgb-accent: var(--rgb-upskill); }
+.row-anchor { --rgb-accent: var(--rgb-anchor); }
+.row-office { --rgb-accent: var(--rgb-office); }
+.row-rest { --rgb-accent: var(--rgb-rest); }
+.row-flex { --rgb-accent: var(--rgb-flex); }
+.row-sleep { --rgb-accent: var(--rgb-sleep); }
 
 /* --- ADMIN PANEL STYLES --- */
 .admin-wrapper {
@@ -473,21 +568,6 @@ td.tasks-col {
 
 .form-group textarea {
     resize: vertical;
-}
-.active-block-highlight {
-    background-color: rgba(30, 41, 59, 1) !important;
-    transform: scale(1.02) !important;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4) !important;
-    border: 1px solid rgba(59, 130, 246, 0.6);
-    z-index: 20;
-    position: relative;
-    animation: pulseGlow 2s infinite;
-}
-
-@keyframes pulseGlow {
-    0% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
-    50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
-    100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
 }
 
 /* Responsive */
